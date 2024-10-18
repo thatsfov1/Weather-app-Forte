@@ -1,5 +1,5 @@
 "use client";
-import React, { useLayoutEffect } from "react";
+import React from "react";
 import { useAppSelector } from "../hooks/redux";
 import FavouriteCard from "@/components/FavouriteCard";
 import Loader from "@/components/loader";

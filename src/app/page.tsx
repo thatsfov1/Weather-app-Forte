@@ -51,8 +51,7 @@ const Dashboard = () => {
     );
   }, [locationName, favourites]);
 
-  const addToFavourite = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const addToFavourite = () => {
     if (data) {
       addFavourite({
         name: locationName,
@@ -65,8 +64,7 @@ const Dashboard = () => {
     }
   };
 
-  const removeFromFavourite = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const removeFromFavourite = () => {
     removeFavourite(locationName);
     setIsFavourite(false);
     toast.success("Location removed from favourites!");

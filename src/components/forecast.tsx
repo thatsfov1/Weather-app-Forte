@@ -1,7 +1,8 @@
+import { Daily } from "@/types/types";
 import React from "react";
 
 type ForecastProps = {
-  forecast: any;
+  forecast: Daily[];
 };
 
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -17,7 +18,7 @@ const Forecast: React.FC<ForecastProps> = ({ forecast }) => {
       <h1 className="font-bold text-xl">7-DAY FORECAST</h1>
       <ul className="mt-8 flex flex-col space-y-4">
         {forecast &&
-          forecast.slice(0, 7).map((day: any, i: number) => (
+          forecast.slice(0, 7).map((day: Daily, i: number) => (
             <li
               className={`flex justify-between items-center ${
                 i < 6 && "border-b-[0.5px] border-slate-400"

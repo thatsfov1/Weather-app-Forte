@@ -1,9 +1,9 @@
 "use client";
 import { useDelay } from "@/app/hooks/useDelay";
 import {
-  useLazyGetWeatherForecastQuery,
   useSearchLocationQuery,
 } from "@/state/weather.api";
+import { ISearchResult } from "@/types/types";
 import React, { useState, useEffect } from "react";
 
 type SearchBarProps = {
@@ -18,15 +18,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [query, setQuery] = useState("");
   const delayedQuery = useDelay(query);
   const [dropdown, setDropdown] = useState(false);
-  const { isLoading, isError, data } = useSearchLocationQuery(delayedQuery, {
+  const { isLoading, isError, data:location } = useSearchLocationQuery(delayedQuery, {
     skip: delayedQuery.length < 2,
   });
 
   useEffect(() => {
-    setDropdown(delayedQuery.length > 1 && data?.length > 0);
-  }, [delayedQuery, data]);
+    setDropdown(delayedQuery.length > 1 && location !== undefined);
+  }, [delayedQuery, location]);
 
-  const handleSearchWeather = (city: any) => {
+  const handleSearchWeather = (city: ISearchResult) => {
     fetchWeatherForecast({ latitude: city.lat, longitude: city.lon });
     setDropdown(false);
     setLocationName(city.name);
@@ -41,22 +41,22 @@ const SearchBar: React.FC<SearchBarProps> = ({
         placeholder="Search for your city"
       />
       {dropdown && (
-        <ul className="list-none absolute top-8 left-0 right-0 shadow-lg bg-[#434c5e] rounded-b-xl">
+        <div className="absolute top-8 left-0 right-0 shadow-lg bg-[#434c5e] rounded-b-xl">
           {isLoading && <p>Please wait for results...</p>}
           {isError && (
             <p className="text-red-300">Error, please try again later</p>
           )}
 
-          {data?.map((city: any) => (
-            <li
+          {location ? (
+            <div
               className="py-2 px-3 cursor-pointer hover:bg-[#7886a1] transition-colors rounded-b-xl"
-              key={city.name}
-              onClick={() => handleSearchWeather(city)}
+              key={location.name}
+              onClick={() => handleSearchWeather(location)}
             >
-              {city.name}, {city.country}
-            </li>
-          ))}
-        </ul>
+              {location.name}, {location.country}
+            </div>
+          ) : <p>No results</p>}
+        </div>
       )}
     </div>
   );

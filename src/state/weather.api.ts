@@ -1,3 +1,4 @@
+import { IWeather,ISearchResult } from "@/types/types";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const weatherApi = createApi({
@@ -6,7 +7,7 @@ export const weatherApi = createApi({
     baseUrl: "https://api.openweathermap.org/",
   }),
   endpoints: (builder) => ({
-    getWeatherForecast: builder.query<any, any>({
+    getWeatherForecast: builder.query<IWeather, {latitude:string, longitude:string}>({
       query: ({ latitude, longitude }) => ({
         url: "data/3.0/onecall",
         params: {
@@ -18,7 +19,7 @@ export const weatherApi = createApi({
         },
       }),
     }),
-    searchLocation: builder.query<any, string>({
+    searchLocation: builder.query<ISearchResult, string>({
       query: (searchQuery: string) => ({
         url: "geo/1.0/direct",
         params: {
