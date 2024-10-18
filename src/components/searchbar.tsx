@@ -6,6 +6,7 @@ import {
 import { ISearchResult } from "@/types/types";
 import React, { useState, useEffect } from "react";
 
+//@ts-ignore
 type SearchBarProps = {
   fetchWeatherForecast: any;
   setLocationName: React.Dispatch<React.SetStateAction<string>>;

@@ -76,7 +76,7 @@ export interface IWeather {
     icon: string
   }
   
-
+//@ts-ignore
   export interface ISearchResult {
     name: string
     local_names: any
