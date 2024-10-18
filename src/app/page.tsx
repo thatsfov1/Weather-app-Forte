@@ -1,101 +1,144 @@
-import Image from "next/image";
+"use client";
+import { useLazyGetWeatherForecastQuery } from "@/state/weather.api";
+import SearchBar from "../components/searchbar";
+import { useActions } from "./hooks/actions";
+import React, { useEffect, useState } from "react";
+import { useAppSelector } from "./hooks/redux";
+import { useSearchParams } from "next/navigation";
+import Forecast from "@/components/forecast";
+import { Droplets, ThermometerSun, Wind } from "lucide-react";
+import Loader from "@/components/loader";
+import toast from "react-hot-toast";
 
-export default function Home() {
+const Dashboard = () => {
+  const [fetchWeatherForecast, { isLoading, isError, data }] =
+    useLazyGetWeatherForecastQuery();
+
+  const { addFavourite, removeFavourite } = useActions();
+  const { favourites } = useAppSelector((state) => state.weather);
+  const [locationName, setLocationName] = useState("");
+  const [isFavourite, setIsFavourite] = useState(false);
+  // for request from favourites
+  const searchParams = useSearchParams();
+  const lat = searchParams.get("lat");
+  const city = searchParams.get("city");
+  const lon = searchParams.get("lon");
+
+  useEffect(() => {
+    // get the weather of location in favourite or current location by default
+    const fetchLocation = async () => {
+      try {
+        if (lat && lon && city) {
+          fetchWeatherForecast({ latitude: lat, longitude: lon });
+          setLocationName(city);
+        } else {
+          const response = await fetch("http://ip-api.com/json/");
+          const data = await response.json();
+          setLocationName(data.city);
+          fetchWeatherForecast({ latitude: data.lat, longitude: data.lon });
+        }
+      } catch (error) {
+        console.error("Error fetching location", error);
+        toast.error('Error fetching location');
+      }
+    };
+    fetchLocation();
+  }, [lat, lon, fetchWeatherForecast]);
+
+  useEffect(() => {
+    setIsFavourite(
+      favourites.some((favourite) => favourite.name === locationName)
+    );
+  }, [locationName, favourites]);
+
+  const addToFavourite = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (data) {
+      addFavourite({
+        name: locationName,
+        temperature: Math.round(data.current.temp),
+        lat: data.lat,
+        lon: data.lon,
+      });
+      setIsFavourite(true);
+      toast.success("Location added to favourites!");
+    }
+  };
+
+  const removeFromFavourite = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    removeFavourite(locationName);
+    setIsFavourite(false);
+    toast.success("Location removed from favourites!");
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="ml-32 w-[500px] xl:w-[700px] 2xl:w-[1000px] relative">
+      <SearchBar
+        fetchWeatherForecast={fetchWeatherForecast}
+        setLocationName={setLocationName}
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {isLoading && <Loader />}
+      {isError && (
+        <p className="text-red-300 mt-5">
+          Something went wrong... Please try again later
+        </p>
+      )}
+      {data && (
+        <div className="mt-4 text-white">
+          {!isFavourite ? (
+            <button
+              onClick={addToFavourite}
+              className=" absolute right-0 top-12 rounded-3xl h-6 w-24  bg-blue-500 text-gray-100 text-[10px]"
+            >
+              Add to favourites
+            </button>
+          ) : (
+            <button
+              onClick={removeFromFavourite}
+              className="absolute right-0 top-12 rounded-3xl h-6 w-32  bg-purple-500 text-gray-100 text-[10px]"
+            >
+              Remove from favourites
+            </button>
+          )}
+          <div className="flex w-full justify-between">
+            <div>
+              <h2 className="text-3xl sm:text-5xl mb-2 font-bold">
+                Weather in {locationName}
+              </h2>
+              <p className="text-slate-300">
+                Feels like: {Math.round(data.current.feels_like)}°C
+              </p>
+            </div>
+            <div>
+              <img
+                alt="weather"
+                className="w-[300px]"
+                src={`icons/${data.current.weather[0].icon}.svg`}
+              />
+            </div>
+          </div>
+
+          <div className="bg-[#434c5e] text-slate-300 p-4 rounded-xl">
+            <h1 className="font-bold text-lg">AIR CONDITIONS</h1>
+            <div className="mt-3 flex justify-between">
+              <p className="flex gap-3">
+                <ThermometerSun /> {Math.round(data.current.temp)}°C
+              </p>
+              <p className="flex gap-3">
+                <Droplets /> {data.current.humidity}%
+              </p>
+              <p className="flex gap-3">
+                <Wind /> {Math.round(data.current.wind_speed)} km/h
+              </p>
+            </div>
+          </div>
+          <Forecast forecast={data?.daily} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      )}
+    </main>
   );
-}
+};
+
+export default Dashboard;
